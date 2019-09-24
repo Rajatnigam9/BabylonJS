@@ -43,6 +43,36 @@
 	<!-- <script src="./script.js"></script> -->
     <script>
         var canvas = document.getElementById("renderCanvas");
+		var thanosFX = 
+`varying vec2 vUV;
+uniform sampler2D textureSampler;
+uniform vec2 screenSize;
+
+uniform sampler2D noiseRef0;
+uniform sampler2D noiseRef1;
+
+uniform float time; 
+
+
+void main(void){ 
+
+    vec2 unit = vUV/screenSize;
+    unit*=16.0+(sin(time*0.5)*50.0);
+    vec2 pos = vUV;
+    pos.x += sin(time*0.35);
+    pos.y -= time*0.2;
+    vec2 r = ((texture2D(noiseRef0, pos).rb)*2.0-1.0)*unit;
+
+
+    vec3 c = texture2D(textureSampler, vUV+r).rgb;
+
+
+
+   gl_FragColor = vec4(c, 1.0);
+}
+`;
+
+ BABYLON.Effect.ShadersStore['thanosEffectFragmentShader'] = thanosFX;
         var createScene = function () {
         
             // --------------------------
@@ -51,35 +81,16 @@
         
             // detail range 1 to 5 : show detail in range 0 to detail_count-1
             var detail_count = 5;
-        
+        var flag=false;
+		var open=false;
+		var isSimulation=false;
             // texture selection
             var texture;
             texture_ref = "http://jerome.bousquie.fr/BJS/images/testTexture.jpg"
             texture = texture_ref; // only one available so far
-        var faceUV = new Array(20);
-        var columns =  4;  // 3 sprites per raw ie colums horizontally as shown in the image
-        var rows =  4;  // 2 sprite raws as shown in the image above.
-        for (var i = 0; i < 16; i++) {
-                var y=i+1;
-                var val=i-(Math.floor(i/4)*4);
-                if(i<4)
-                {
-                faceUV[i] = new BABYLON.Vector4((val+1)/columns, 0/rows, (val)/columns, 1/rows);
-                }
-                else
-                if(i<8)
-                {
-                faceUV[i] = new BABYLON.Vector4((val+1)/columns, 3/rows, (val)/columns, 4/rows);
-                }
-                else if(i<12)
-                {
-                faceUV[i] = new BABYLON.Vector4((val+1)/columns, 2/rows, (val)/columns, 3/rows);
-                }
-                else
-                {
-                faceUV[i] = new BABYLON.Vector4((val+1)/columns, 1/rows, (val)/columns, 2/rows);
-                }
-            }
+        var faceUV;
+        
+        
             // --------------------------
             // End of options
             // --------------------------
@@ -113,19 +124,10 @@
             // --------------------------
             // Set up 2 light source rotating around enlight the icosphere 
             // --------------------------
-        
-             var light0 = new BABYLON.PointLight("light0_point", new BABYLON.Vector3(1, 5, 1), scene);
-             light0.diffuse = BABYLON.Color3.Green();
-             light0.specular = BABYLON.Color3.Black();
-             light0.intensity = 0.9;
-             var light1 = new BABYLON.PointLight("light1_point", new BABYLON.Vector3(5, 1, 1), scene);
-             light1.diffuse = BABYLON.Color3.Red(); // Red
-             light1.specular = BABYLON.Color3.Black();
-             light1.intensity = 0.9;
              // This creates a light, aiming 0,1,0 - to the sky.
-             var hemi_light1 = new BABYLON.HemisphericLight("light1_hemi", new BABYLON.Vector3(0, 15, 0), scene);
+              hemi_light1 = new BABYLON.HemisphericLight("light1_hemi", new BABYLON.Vector3(0, 0, 0), scene);
              // Tune intensity
-             hemi_light1.intensity = 0.8;
+             hemi_light1.intensity = 3.0;
              hemi_light1.specular = BABYLON.Color3.Black();
              hemi_light1.diffuse = BABYLON.Color3.White();
              hemi_light1.groundColor = BABYLON.Color3.Black();
@@ -133,23 +135,30 @@
             // ----------------------------------------------
             // Purpose of the playground : show the icosphere
             // ----------------------------------------------
-        var boxImpostorParams = { mass: 10, restitution: 0, friction: 0.01 };
+        var boxImpostorParams = { mass: 1, restitution: 0, friction: 0.01 };
             // Create 'Ico sphere' shape. Params: name, radius, flat, subdivide, scene
-			//var sphere1 =BABYLON.Mesh.CreateIcoSphere("icosphere", {radius:2, flat:true, subdivisions: 12}, scene);
-			//sphere1.material = new BABYLON.StandardMaterial("qwerty", scene);
+			faceUV=getFacetData(26);
+			var sphere1 =BABYLON.MeshBuilder.CreatePolyhedron("oct", {type: 4, size: 1.75,faceUV:faceUV}, scene);;
+			sphere1.material = new BABYLON.StandardMaterial("qwerty", scene);
+			sphere1.material.diffuseColor = BABYLON.Color3.White(); // base color for diffuse before reflect
+            sphere1.material.diffuseTexture = new BABYLON.Texture(texture,scene);
+			sphere1.updateFacetData();
+			sphere1.isVisible=false;
+			sphere1.material.emissiveColor = new BABYLON.Color3.White();
+			console.log(sphere1.facetNb);
 			//sphere1.material.wireframe = true;
-            var sphere0 =BABYLON.MeshBuilder.CreatePolyhedron("oct", {type: 3, size: 1.75,faceUV:faceUV}, scene); 
-            sphere0.material = new BABYLON.StandardMaterial("hoho", scene);            
-            sphere0.material.diffuseColor = BABYLON.Color3.White(); // base color for diffuse before reflect
-            sphere0.material.diffuseTexture = new BABYLON.Texture(texture,scene);
-			//sphere0.physicsImpostor = new BABYLON.PhysicsImpostor(sphere0, BABYLON.PhysicsImpostor.MeshImpostor, boxImpostorParams, scene);
-			//physicsViewer.showImpostor(sphere0.physicsImpostor);
+			faceUV=getFacetData(20);
+            var Icosahedron =BABYLON.MeshBuilder.CreatePolyhedron("oct", {type: 3, size: 1.75,faceUV:faceUV}, scene); 
+            Icosahedron.material = new BABYLON.StandardMaterial("hoho", scene);            
+            Icosahedron.material.diffuseColor = BABYLON.Color3.White(); // base color for diffuse before reflect
+            Icosahedron.material.diffuseTexture = new BABYLON.Texture(texture,scene);
             // Add the highlight layer.
         	var hl = new BABYLON.HighlightLayer("hl1", scene);
-        	hl.addMesh(sphere0, BABYLON.Color3.Green());
+        	hl.addMesh(Icosahedron, BABYLON.Color3.Green());
+			hl.addMesh(sphere1, BABYLON.Color3.Green());
             
             // Move the sphere upward 1/2 its height
-            sphere0.position.y = 0;
+            Icosahedron.position.y = 0;
         window.addEventListener("click", function () {
            // We try to pick an object
            var pickResult = scene.pick(scene.pointerX, scene.pointerY);
@@ -157,16 +166,25 @@
            {
            var indices = pickResult.pickedMesh.getIndices();
 			alert(pickResult.faceId+1);
-			sphere0.physicsImpostor = new BABYLON.PhysicsImpostor(sphere0, BABYLON.PhysicsImpostor.MeshImpostor, boxImpostorParams, scene);
-			physicsViewer.showImpostor(sphere0.physicsImpostor);
+			console.log(pickResult);
+			flag=true;
+			open=true;
+			//Icosahedron.physicsImpostor = new BABYLON.PhysicsImpostor(Icosahedron, BABYLON.PhysicsImpostor.MeshImpostor, boxImpostorParams, scene);
+			//physicsViewer.showImpostor(Icosahedron.physicsImpostor);
         }
         });
         var pointerDragBehavior = new BABYLON.PointerDragBehavior({dragAxis: new BABYLON.Vector3(1,0,0)});
-        pointerDragBehavior.onDragObservable.add((event)=>{
-                console.log("drag");
-                console.log(event);
-            })
-			var perticleFromVerticesEmitter = sphere0;
+        pointerDragBehavior.onDragStartObservable.add((event)=>{
+    console.log("dragStart");
+    console.log(event);
+	isSimulation=true;
+})
+pointerDragBehavior.onDragEndObservable.add((event)=>{
+    console.log("dragEnd");
+    console.log(event);
+	isSimulation=false;
+})
+			var perticleFromVerticesEmitter = Icosahedron;
         	perticleFromVerticesEmitter.useVertexColors = true;
         	
         	var verticesPositions = perticleFromVerticesEmitter.getVerticesData(BABYLON.VertexBuffer.PositionKind);
@@ -235,14 +253,9 @@
         
             // Animations
             var frame_count = 0;
+			    var time = 0;
+				var rate = 0.01;
             scene.beforeRender = function () {
-                 light0.position.copyFromFloats(5.0 * Math.sin(frame_count/100),
-                                                2.0,
-                                                5.0 * Math.cos(frame_count/100) );
-                 light1.position.copyFromFloats(5.0 * Math.cos(2*frame_count/100),
-                                                2.0 + 5.0 * Math.sin(2*frame_count/100),
-                                                2.0                   );
-        
                 // Make sphere visible with increasing details every 100 frame
                 // detail in 0, 1, 2, 3, 4
                 // flat in 0, 1
@@ -250,13 +263,46 @@
                 showflat = (showdetail>=detail_count);
                 detail = showdetail % detail_count;
                 frame_count ++;
+				if(flag&&hemi_light1.intensity>-3)
+				{
+				hemi_light1.intensity-=0.01;
+				
+				}
+				else if(open&&hemi_light1.intensity<2)
+				{
+				Icosahedron.isVisible=false;
+				sphere1.isVisible=true;
+				flag=false;
+				hemi_light1.intensity+=0.02;
+				}
+				else if(open){
+				flag=true;
+				open=false;
+				}
+				else{
+				sphere1.isVisible=false;
+				}
+				fluidSimulation(scene,isSimulation,time,rate);
+				//time+=scene.getAnimationRatio()*rate;
             };
-        <!-- document.onkeydown = ()=>{ -->
-                <!-- pointerDragBehavior.dragging ? pointerDragBehavior.releaseDrag() : pointerDragBehavior.startDrag(55) -->
+        document.onkeydown = ()=>{
+                pointerDragBehavior.dragging ? pointerDragBehavior.releasedrag() : pointerDragBehavior.startDrag(55)
                 
-            <!-- } -->
-            <!-- sphere0.addBehavior(pointerDragBehavior); -->
+            }
+            Icosahedron.addBehavior(pointerDragBehavior);
             // Leave this function
+			
+			var postEffect = new BABYLON.PostProcess("thanosEffect", "thanosEffect", ["time", "screenSize"], ["noiseRef0", "noiseRef1"], 1, camera);
+       
+    var noiseTexture0 = new BABYLON.Texture('https://www.babylonjs-playground.com/textures/grass.png', scene);
+    var noiseTexture1 = new BABYLON.Texture('https://www.babylonjs-playground.com/textures/ground.jpg', scene);
+
+    postEffect.onApply = function (effect) {
+        effect.setVector2("screenSize", new BABYLON.Vector2(postEffect.width, postEffect.height));
+        effect.setFloat('time', time); //this is the problematic line
+        effect.setTexture('noiseRef0', noiseTexture0);
+        effect.setTexture('noiseRef1', noiseTexture1);
+    };   
             return scene;
         
         };  // End of createScene function
@@ -271,7 +317,47 @@ __createScene = createScene;
                 scene.render();
             }
         });
+function getFacetData(count)
+{
+var faceUV = new Array(count);
+var columns =  4;  // 3 sprites per raw ie colums horizontally as shown in the image
+var rows =  4;  // 2 sprite raws as shown in the image above.
+for (var i = 0; i < count; i++) {
+		var input=i;
+		if(input>15)
+		{
+		input=i-16;
+		}
+                var y=input+1;
+                var val=input-(Math.floor(input/4)*4);
+                if(input<4)
+                {
+                faceUV[i] = new BABYLON.Vector4((val+1)/columns, 0/rows, (val)/columns, 1/rows);
+                }
+                else
+                if(input<8)
+                {
+                faceUV[i] = new BABYLON.Vector4((val+1)/columns, 3/rows, (val)/columns, 4/rows);
+                }
+                else if(input<12)
+                {
+                faceUV[i] = new BABYLON.Vector4((val+1)/columns, 2/rows, (val)/columns, 3/rows);
+                }
+                else
+                {
+                faceUV[i] = new BABYLON.Vector4((val+1)/columns, 1/rows, (val)/columns, 2/rows);
+                }
+            }
+			return faceUV;
+}
 
+function fluidSimulation(scene, flag, time, rate)
+{
+if(flag)
+{
+time+=scene.getAnimationRatio()*rate;
+}
+}
         // Resize
         <!-- window.addEventListener("resize", function () { -->
             <!-- engine.resize(); -->
