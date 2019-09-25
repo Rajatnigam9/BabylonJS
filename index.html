@@ -82,8 +82,7 @@ void main(void){
             // detail range 1 to 5 : show detail in range 0 to detail_count-1
             var detail_count = 5;
         var flag=false;
-		var open=false;
-		var isSimulation=false;
+		 open=false;
             // texture selection
             var texture;
             texture_ref = "http://jerome.bousquie.fr/BJS/images/testTexture.jpg"
@@ -127,7 +126,7 @@ void main(void){
              // This creates a light, aiming 0,1,0 - to the sky.
               hemi_light1 = new BABYLON.HemisphericLight("light1_hemi", new BABYLON.Vector3(0, 0, 0), scene);
              // Tune intensity
-             hemi_light1.intensity = 3.0;
+             hemi_light1.intensity = 1.5;
              hemi_light1.specular = BABYLON.Color3.Black();
              hemi_light1.diffuse = BABYLON.Color3.White();
              hemi_light1.groundColor = BABYLON.Color3.Black();
@@ -138,7 +137,7 @@ void main(void){
         var boxImpostorParams = { mass: 1, restitution: 0, friction: 0.01 };
             // Create 'Ico sphere' shape. Params: name, radius, flat, subdivide, scene
 			faceUV=getFacetData(26);
-			var sphere1 =BABYLON.MeshBuilder.CreatePolyhedron("oct", {type: 4, size: 1.75,faceUV:faceUV}, scene);;
+			var sphere1 =BABYLON.MeshBuilder.CreateIcoSphere("icosphere", {radius:2, flat:true, subdivisions: 2}, scene)
 			sphere1.material = new BABYLON.StandardMaterial("qwerty", scene);
 			sphere1.material.diffuseColor = BABYLON.Color3.White(); // base color for diffuse before reflect
             sphere1.material.diffuseTexture = new BABYLON.Texture(texture,scene);
@@ -152,6 +151,7 @@ void main(void){
             Icosahedron.material = new BABYLON.StandardMaterial("hoho", scene);            
             Icosahedron.material.diffuseColor = BABYLON.Color3.White(); // base color for diffuse before reflect
             Icosahedron.material.diffuseTexture = new BABYLON.Texture(texture,scene);
+			Icosahedron.enablePointerMoveEvents=true;
             // Add the highlight layer.
         	var hl = new BABYLON.HighlightLayer("hl1", scene);
         	hl.addMesh(Icosahedron, BABYLON.Color3.Green());
@@ -244,7 +244,7 @@ pointerDragBehavior.onDragEndObservable.add((event)=>{
             particleSystem.updateSpeed = 1/60;
 
             // Start the particle system
-            particleSystem.start();
+            //particleSystem.start();
 
             // Let's try our built-in 'ground' shape.  Params: name, width, depth, subdivisions, scene
             // var ground = BABYLON.Mesh.CreateGround("ground1", 10, 10, 2, scene);
@@ -253,6 +253,7 @@ pointerDragBehavior.onDragEndObservable.add((event)=>{
         
             // Animations
             var frame_count = 0;
+			var freq=0.04;
 			    var time = 0;
 				var rate = 0.01;
             scene.beforeRender = function () {
@@ -263,6 +264,27 @@ pointerDragBehavior.onDragEndObservable.add((event)=>{
                 showflat = (showdetail>=detail_count);
                 detail = showdetail % detail_count;
                 frame_count ++;
+				if(flag&&hemi_light1.intensity>-2)
+				{
+				hemi_light1.intensity-=freq;
+				
+				}
+				else if(open&&hemi_light1.intensity<2)
+				{
+				Icosahedron.isVisible=false;
+				sphere1.isVisible=true;
+				freq=0.02;
+				flag=false;
+				hemi_light1.intensity+=0.02;
+				}
+				else if(open){
+				flag=true;
+				open=false;
+				}
+				else{
+				sphere1.isVisible=false;
+				}
+				
 				if(flag&&hemi_light1.intensity>-3)
 				{
 				hemi_light1.intensity-=0.01;
@@ -285,6 +307,14 @@ pointerDragBehavior.onDragEndObservable.add((event)=>{
 				fluidSimulation(scene,isSimulation,time,rate);
 				//time+=scene.getAnimationRatio()*rate;
             };
+					scene.onPointerMove = function(evt, pickResult) {
+        if (pickResult.hit) {
+            canvas.style.cursor = "pointer";
+			console.log(pickResult.faceId+1);
+        }
+    }
+        <!-- document.onkeydown = ()=>{ -->
+                <!-- pointerDragBehavior.dragging ? pointerDragBehavior.releaseDrag() : pointerDragBehavior.startDrag(55) -->
         document.onkeydown = ()=>{
                 pointerDragBehavior.dragging ? pointerDragBehavior.releasedrag() : pointerDragBehavior.startDrag(55)
                 
