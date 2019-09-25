@@ -82,7 +82,8 @@ void main(void){
             // detail range 1 to 5 : show detail in range 0 to detail_count-1
             var detail_count = 5;
         var flag=false;
-		 open=false;
+		var open=false;
+		var isSimulation=false;
             // texture selection
             var texture;
             texture_ref = "http://jerome.bousquie.fr/BJS/images/testTexture.jpg"
@@ -141,17 +142,18 @@ void main(void){
 			sphere1.material = new BABYLON.StandardMaterial("qwerty", scene);
 			sphere1.material.diffuseColor = BABYLON.Color3.White(); // base color for diffuse before reflect
             sphere1.material.diffuseTexture = new BABYLON.Texture(texture,scene);
-			sphere1.updateFacetData();
 			sphere1.isVisible=false;
 			sphere1.material.emissiveColor = new BABYLON.Color3.White();
-			console.log(sphere1.facetNb);
-			//sphere1.material.wireframe = true;
 			faceUV=getFacetData(20);
             var Icosahedron =BABYLON.MeshBuilder.CreatePolyhedron("oct", {type: 3, size: 1.75,faceUV:faceUV}, scene); 
             Icosahedron.material = new BABYLON.StandardMaterial("hoho", scene);            
             Icosahedron.material.diffuseColor = BABYLON.Color3.White(); // base color for diffuse before reflect
             Icosahedron.material.diffuseTexture = new BABYLON.Texture(texture,scene);
 			Icosahedron.enablePointerMoveEvents=true;
+			var sphere =BABYLON.MeshBuilder.CreateIcoSphere("icosphere", {radius:0.5, flat:true, subdivisions: 16}, scene)
+			sphere.material = new BABYLON.StandardMaterial("qwerty", scene);
+			sphere.hasVertexAlpha =true;
+			sphere.visibility=0.5;
             // Add the highlight layer.
         	var hl = new BABYLON.HighlightLayer("hl1", scene);
         	hl.addMesh(Icosahedron, BABYLON.Color3.Green());
@@ -161,6 +163,7 @@ void main(void){
             Icosahedron.position.y = 0;
         window.addEventListener("click", function () {
            // We try to pick an object
+		   sphere.isVisible=false;
            var pickResult = scene.pick(scene.pointerX, scene.pointerY);
            if(pickResult.hit)
            {
@@ -172,6 +175,7 @@ void main(void){
 			//Icosahedron.physicsImpostor = new BABYLON.PhysicsImpostor(Icosahedron, BABYLON.PhysicsImpostor.MeshImpostor, boxImpostorParams, scene);
 			//physicsViewer.showImpostor(Icosahedron.physicsImpostor);
         }
+		sphere.isVisible=true;
         });
         var pointerDragBehavior = new BABYLON.PointerDragBehavior({dragAxis: new BABYLON.Vector3(1,0,0)});
         pointerDragBehavior.onDragStartObservable.add((event)=>{
@@ -307,11 +311,21 @@ pointerDragBehavior.onDragEndObservable.add((event)=>{
 				fluidSimulation(scene,isSimulation,time,rate);
 				//time+=scene.getAnimationRatio()*rate;
             };
+			//var mesh = BABYLON.Mesh.MergeMeshes([Icosahedron, sphere], true, true, undefined, false, true);
 					scene.onPointerMove = function(evt, pickResult) {
         if (pickResult.hit) {
             canvas.style.cursor = "pointer";
-			console.log(pickResult.faceId+1);
+			console.log(pickResult.pickedPoint.x);
+			sphere.isVisible=true;
+			//pickResult.pickedPoint.x
+			sphere.position.x=pickResult.pickedPoint.x;
+			sphere.position.y=pickResult.pickedPoint.y;
+			sphere.position.z=pickResult.pickedPoint.z;
+			
         }
+		else{
+		sphere.isVisible=false;
+		}
     }
         <!-- document.onkeydown = ()=>{ -->
                 <!-- pointerDragBehavior.dragging ? pointerDragBehavior.releaseDrag() : pointerDragBehavior.startDrag(55) -->
@@ -330,9 +344,10 @@ pointerDragBehavior.onDragEndObservable.add((event)=>{
     postEffect.onApply = function (effect) {
         effect.setVector2("screenSize", new BABYLON.Vector2(postEffect.width, postEffect.height));
         effect.setFloat('time', time); //this is the problematic line
-        effect.setTexture('noiseRef0', noiseTexture0);
-        effect.setTexture('noiseRef1', noiseTexture1);
+        <!-- effect.setTexture('noiseRef0', noiseTexture0); -->
+        <!-- effect.setTexture('noiseRef1', noiseTexture1); -->
     };   
+	//var mesh = BABYLON.Mesh.MergeMeshes([sphere, Icosahedron], true, true, undefined, false, true);
             return scene;
         
         };  // End of createScene function
