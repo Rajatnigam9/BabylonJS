@@ -151,7 +151,15 @@ void main(void){
             Icosahedron.material.diffuseTexture = new BABYLON.Texture(texture,scene);
 			Icosahedron.enablePointerMoveEvents=true;
 			var sphere =BABYLON.MeshBuilder.CreateIcoSphere("icosphere", {radius:0.5, flat:true, subdivisions: 16}, scene)
-			sphere.material = new BABYLON.StandardMaterial("qwerty", scene);
+			var mat = new BABYLON.StandardMaterial("mat", scene);
+			sphere.material = mat;
+			mat.disableLighting = true;
+			mat.backFaceCulling = false;
+			var noiseTexture = new BABYLON.NoiseProceduralTexture("perlin", 256, scene);
+			mat.emissiveTexture = noiseTexture;
+			noiseTexture.animationSpeedFactor=7.00;
+			noiseTexture.octaves = 6.00;
+			//sphere.material = new BABYLON.StandardMaterial("qwerty", scene);
 			sphere.hasVertexAlpha =true;
 			sphere.visibility=0.5;
             // Add the highlight layer.
