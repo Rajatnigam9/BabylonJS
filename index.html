@@ -127,7 +127,7 @@ void main(void){
              // This creates a light, aiming 0,1,0 - to the sky.
               hemi_light1 = new BABYLON.HemisphericLight("light1_hemi", new BABYLON.Vector3(0, 0, 0), scene);
              // Tune intensity
-             hemi_light1.intensity = 1.5;
+             hemi_light1.intensity = 2.5;
              hemi_light1.specular = BABYLON.Color3.Black();
              hemi_light1.diffuse = BABYLON.Color3.White();
              hemi_light1.groundColor = BABYLON.Color3.Black();
@@ -153,12 +153,13 @@ void main(void){
 			var sphere =BABYLON.MeshBuilder.CreateIcoSphere("icosphere", {radius:0.5, flat:true, subdivisions: 16}, scene)
 			var mat = new BABYLON.StandardMaterial("mat", scene);
 			sphere.material = mat;
-			mat.disableLighting = true;
-			mat.backFaceCulling = false;
+			Icosahedron.material.disableLighting = true;
+			Icosahedron.material.backFaceCulling = false;
 			var noiseTexture = new BABYLON.NoiseProceduralTexture("perlin", 256, scene);
-			mat.emissiveTexture = noiseTexture;
-			noiseTexture.animationSpeedFactor=7.00;
+			Icosahedron.material.emissiveTexture = noiseTexture;
+			noiseTexture.animationSpeedFactor=3.20;
 			noiseTexture.octaves = 6.00;
+			noiseTexture.persistence=1.0;
 			//sphere.material = new BABYLON.StandardMaterial("qwerty", scene);
 			sphere.hasVertexAlpha =true;
 			sphere.visibility=0.5;
@@ -265,7 +266,7 @@ pointerDragBehavior.onDragEndObservable.add((event)=>{
         
             // Animations
             var frame_count = 0;
-			var freq=0.04;
+			var freq=0.50;
 			    var time = 0;
 				var rate = 0.01;
             scene.beforeRender = function () {
@@ -281,31 +282,11 @@ pointerDragBehavior.onDragEndObservable.add((event)=>{
 				hemi_light1.intensity-=freq;
 				
 				}
-				else if(open&&hemi_light1.intensity<2)
+				else if(open&&hemi_light1.intensity<3)
 				{
 				Icosahedron.isVisible=false;
 				sphere1.isVisible=true;
 				freq=0.02;
-				flag=false;
-				hemi_light1.intensity+=0.02;
-				}
-				else if(open){
-				flag=true;
-				open=false;
-				}
-				else{
-				sphere1.isVisible=false;
-				}
-				
-				if(flag&&hemi_light1.intensity>-3)
-				{
-				hemi_light1.intensity-=0.01;
-				
-				}
-				else if(open&&hemi_light1.intensity<2)
-				{
-				Icosahedron.isVisible=false;
-				sphere1.isVisible=true;
 				flag=false;
 				hemi_light1.intensity+=0.02;
 				}
