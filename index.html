@@ -88,6 +88,7 @@ void main(void){
             var texture;
             texture_ref = "http://jerome.bousquie.fr/BJS/images/testTexture.jpg"
             texture = texture_ref; // only one available so far
+			var texture2="maxresdefault.jpg"
         var faceUV;
         
         
@@ -127,7 +128,7 @@ void main(void){
              // This creates a light, aiming 0,1,0 - to the sky.
               hemi_light1 = new BABYLON.HemisphericLight("light1_hemi", new BABYLON.Vector3(0, 0, 0), scene);
              // Tune intensity
-             hemi_light1.intensity = 2.5;
+             hemi_light1.intensity = 1.5;
              hemi_light1.specular = BABYLON.Color3.Black();
              hemi_light1.diffuse = BABYLON.Color3.White();
              hemi_light1.groundColor = BABYLON.Color3.Black();
@@ -137,11 +138,11 @@ void main(void){
             // ----------------------------------------------
         var boxImpostorParams = { mass: 1, restitution: 0, friction: 0.01 };
             // Create 'Ico sphere' shape. Params: name, radius, flat, subdivide, scene
-			faceUV=getFacetData(26);
+			faceUV=getFacetData(80);
 			var sphere1 =BABYLON.MeshBuilder.CreateIcoSphere("icosphere", {radius:2, flat:true, subdivisions: 2}, scene)
 			sphere1.material = new BABYLON.StandardMaterial("qwerty", scene);
 			sphere1.material.diffuseColor = BABYLON.Color3.White(); // base color for diffuse before reflect
-            sphere1.material.diffuseTexture = new BABYLON.Texture(texture,scene);
+            sphere1.material.diffuseTexture = new BABYLON.Texture(texture2,scene);
 			sphere1.isVisible=false;
 			sphere1.material.emissiveColor = new BABYLON.Color3.White();
 			faceUV=getFacetData(20);
@@ -153,13 +154,12 @@ void main(void){
 			var sphere =BABYLON.MeshBuilder.CreateIcoSphere("icosphere", {radius:0.5, flat:true, subdivisions: 16}, scene)
 			var mat = new BABYLON.StandardMaterial("mat", scene);
 			sphere.material = mat;
-			Icosahedron.material.disableLighting = true;
-			Icosahedron.material.backFaceCulling = false;
+			mat.disableLighting = true;
+			mat.backFaceCulling = false;
 			var noiseTexture = new BABYLON.NoiseProceduralTexture("perlin", 256, scene);
-			Icosahedron.material.emissiveTexture = noiseTexture;
-			noiseTexture.animationSpeedFactor=3.20;
+			mat.emissiveTexture = noiseTexture;
+			noiseTexture.animationSpeedFactor=7.00;
 			noiseTexture.octaves = 6.00;
-			noiseTexture.persistence=1.0;
 			//sphere.material = new BABYLON.StandardMaterial("qwerty", scene);
 			sphere.hasVertexAlpha =true;
 			sphere.visibility=0.5;
@@ -178,7 +178,7 @@ void main(void){
            {
            var indices = pickResult.pickedMesh.getIndices();
 			alert(pickResult.faceId+1);
-			console.log(pickResult);
+			//console.log(pickResult);
 			flag=true;
 			open=true;
 			//Icosahedron.physicsImpostor = new BABYLON.PhysicsImpostor(Icosahedron, BABYLON.PhysicsImpostor.MeshImpostor, boxImpostorParams, scene);
@@ -266,7 +266,7 @@ pointerDragBehavior.onDragEndObservable.add((event)=>{
         
             // Animations
             var frame_count = 0;
-			var freq=0.50;
+			var freq=0.04;
 			    var time = 0;
 				var rate = 0.01;
             scene.beforeRender = function () {
@@ -282,11 +282,31 @@ pointerDragBehavior.onDragEndObservable.add((event)=>{
 				hemi_light1.intensity-=freq;
 				
 				}
-				else if(open&&hemi_light1.intensity<3)
+				else if(open&&hemi_light1.intensity<2)
 				{
 				Icosahedron.isVisible=false;
 				sphere1.isVisible=true;
 				freq=0.02;
+				flag=false;
+				hemi_light1.intensity+=0.02;
+				}
+				else if(open){
+				flag=true;
+				open=false;
+				}
+				else{
+				sphere1.isVisible=false;
+				}
+				
+				if(flag&&hemi_light1.intensity>-3)
+				{
+				hemi_light1.intensity-=0.01;
+				
+				}
+				else if(open&&hemi_light1.intensity<2)
+				{
+				Icosahedron.isVisible=false;
+				sphere1.isVisible=true;
 				flag=false;
 				hemi_light1.intensity+=0.02;
 				}
